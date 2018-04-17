@@ -12,6 +12,12 @@
 
 ### 整体解决方案
 
+* 借鉴某位师兄的工厂接口，其余具体架构和实现重新写  
+
+#### 整体UML化简图（部分函数和接口还未加上）
+   
+   <img src="http://imglf5.nosdn.127.net/img/Z281REhERnhNZlhsYXVvUTNMV2JZMkZHYWdiMFk3Z2VLcHg5SVhyNVNRNVgrRGY0WUYrMFZ3PT0.png?imageView&thumbnail=500x0&quality=96&stripmeta=0"  /> 
+
 #### MVC架构
 
 > * 游戏总体结构：
@@ -25,39 +31,42 @@
 //再通过这个函数分别调用View和Factory里面的destoryDisk来从视觉和逻辑上将其“删除”
 
 //View里面的：
-private void Update(){
-    if (usingDisks[i].transform.position.y <=2){
-        GameScenceController.getGSController().destroyDisk(usingDisks[i]);
-        GameScenceController.getGSController().subScore();
-    }
-}
+for (int i = 0; i < usingUFOs.Count; i++) {
+			if (usingUFOs [i].transform.position.y < -10) {//判断出界,回收
+				//model.getModel().subScore(10);
+				Controller.getController().deleteUFO(usingUFOs[i]);
+
+			}
+		}
+
 //这里的usingDisks[i].transform.position.y <=2判断Disk已经在视野之外如果扔未被点击，
 //需要将其“摧毁”，于是调用下面在Controller的接口
 //Controller里面的：
 public class Controller{
-    public void destroyDisk(GameObject disk)
-        {
-            _scence.destroyDisk(disk);
-            _diskFactory.recycleDisk(disk);
-        }
+   public void deleteUFO(GameObject UFO){
+		UFOFactory.getFactory().deleteUFO(UFO);
+		Scene.getScene().deleteUFO(UFO);
+	}
+
 }
 //这时Controller要在视觉和逻辑上隐藏飞盘，
 //所以具体的操作又交回给负责视觉上的View和负责对盘子进行逻辑操作的DiskFactory
 //View里面的destroyDisk(disk)
-public void destroyDisk(GameObject disk)
-    {
-        disk.GetComponent<Rigidbody>().Sleep();
-        disk.GetComponent<Rigidbody>().useGravity = false;
-        disk.transform.position = new Vector3(0f, -99f, 0f);//将其隐藏到摄像机外
-    }
+public void  deleteUFO(GameObject UFO){
+		UFO.GetComponent<Rigidbody> ().Sleep ();
+		UFO.GetComponent<Rigidbody> ().useGravity = false;
+		UFO.transform.position = new Vector3 (0f, 20f, 0f);
+
+	}
 //Factory里面的Destory，要留意的是因为还考虑到了工厂模式，
 //所以这里的Destory其实是将Disk放回待用序列uselessDisks等待被下一次调用。
-public void recycleDisk(GameObject disk)
-    {
-        int index = usingDisks.FindIndex(x => x == disk);//找到usingDisks里面要回收的disks放回uselessDisks
-        uselessDisks.Add(disk);
-        usingDisks.RemoveAt(index);
-    }
+public void deleteUFO(GameObject UFO)
+		{
+			//Debug.Log ("deleteUFO");
+			int index = usingUFOs.FindIndex(x => x == UFO);//找到usingUFOs里面要回收的UFOs放回uselessUFOs
+			uselessUFOs.Add(UFO);
+			usingUFOs.RemoveAt(index);
+		}
 ```  
 
 #### 工厂模式  
@@ -65,6 +74,64 @@ public void recycleDisk(GameObject disk)
 >  *   所以当一个物体不用的时候将其存进一个存储序列，等待下次要重新调用的时候再将其取出放入使用序列
 >  *   下面以飞盘工厂为示例：
 ``` 
+//最基本的实例化，ps:在camera下面给diskPrefabs添加resource下面的Disk
+public GameObject diskPrefab;
+GameObject disk = GameObject.Instantiate<GameObject>(diskPrefab);
+
+//存放正在使用的飞盘
+private List<GameObject> usingUFOs;
+
+//存放回收的不使用的飞盘
+private List<GameObject> uselessUFOs;
+
+//工厂的单例化，保证只有一个工厂
+public static UFOFactory getFactory()
+		{
+			if (_UFOFactory == null)
+			{
+				_UFOFactory = new UFOFactory();//相当于创造一个空的工厂，里面有usingUFOs这些指针，但还没有分配空间
+				_UFOFactory.uselessUFOs = new List<GameObject>();
+				_UFOFactory.usingUFOs = new List<GameObject>();
+			}
+			return _UFOFactory;
+		}
+
+   
+//从usingDisks回收已使用的飞盘
+public void deleteUFO(GameObject UFO)
+		{
+			//Debug.Log ("deleteUFO");
+			int index = usingUFOs.FindIndex(x => x == UFO);//找到usingUFOs里面要回收的UFOs放回uselessUFOs
+			uselessUFOs.Add(UFO);
+			usingUFOs.RemoveAt(index);
+		}
+
+//创建飞盘
+public List<GameObject> creatUFOs(int UFOCount)
+		{
+			for (int i = 0; i < UFOCount; i++)
+			{	
+				
+				if (uselessUFOs.Count == 0)
+				{
+					GameObject UFO = GameObject.Instantiate<GameObject>(UFOprefab);
+
+					//UFO.SetActive (false);
+					usingUFOs.Add(UFO);
+
+				}
+				else//从uselessUFO拿出来，不额外创建
+				{
+					GameObject UFO = uselessUFOs[0];
+
+					uselessUFOs.RemoveAt(0);
+					usingUFOs.Add(UFO);
+					//Debug.Log ("create UFO from uselessUFO");
+				}
+			}
+			return this.usingUFOs;
+		}
+
 
 ```
 
