@@ -12,7 +12,7 @@
 
 ### 整体解决方案
 
-* 视频连接：
+* 视频连接：http://v.youku.com/v_show/id_XMzU0NTc5MjUxMg==.html?spm=a2h3j.8428770.3416059.1
 
 #### 整体UML化简图
    
