@@ -139,6 +139,8 @@ public List<GameObject> creatUFOs(int UFOCount)
 >   *  一开始打算让所有类都实现单例化，例如Controller大类有一个getController()的单例化函数，Scene大类有一个getScene()的单例化函数
 >   *  但出现问题是如果所有csharp文件的类都用了单例化，意味着没有代码可以负载在object上运行，因此要改进的是创建一个不用单例化的main() 
 >   *  main大类继承Monobehavior。
+>  * 函数命名
+>   *  一个csharp文件只有下面有与其名字相同的public class xxx:monobehavior{}类时才能被加载到object上
 
 #### 下面为完整代码，还有不足之处有待后期改进  
 ##### Scene.cs
